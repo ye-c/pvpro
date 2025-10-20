@@ -250,15 +250,19 @@ class Pivor:
                     new_fp = self.archive / ts[:6] / pv / x.name
 
                     # 检查目标文件是否已存在
-                    if handle_duplicate and new_fp.exists():
+                    if new_fp.exists():
                         logger.warning(f"已存在: {fp.name} -> {new_fp}")
-                        duplicate_count += 1
-                        dup_1 = self.duplicates_dir / f"{new_fp.stem}_1{new_fp.suffix}"
-                        dup_2 = self.duplicates_dir / f"{fp.stem}_2{fp.suffix}"
-                        new_fp.rename(dup_1)
-                        new_fp = dup_2
-                        logger.warning(f"{dup_1=}")
-                        logger.warning(f"{dup_2=}")
+                        if handle_duplicate:
+                            duplicate_count += 1
+                            dup_1 = self.duplicates_dir / new_fp.name
+                            dup_2 = self.duplicates_dir / fp.name
+                            new_fp.rename(dup_1)
+                            new_fp = dup_2
+                            logger.warning(f"{dup_1=}")
+                            logger.warning(f"{dup_2=}")
+                        else:
+                            logger.warning(f"pass: {str(fp)}")
+                            continue
                     elif model == "UNKNOWN":
                         logger.warning(f"snapshot: {fp.name} -> {new_fp}")
                         new_fp = self.snapshot_dir / new_fp.name
@@ -296,6 +300,10 @@ class Pivor:
 
         logger.info(summary)
         print(summary)
+
+    def check(self):
+        for f in self._iter_dir(self.archive):
+            ...
 
     def recover(self):
         for f in self.duplicates_dir.rglob('*'):
